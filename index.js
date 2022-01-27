@@ -17,32 +17,31 @@ function updateCosConfig() {
 }
 
 async function listObjects(bucketName) {
-    await cos.listObjects({ Bucket: bucketName }, function (err, data) {
-        if (err) throw err;
+    const listObjects = await cos.listObjects({ Bucket: bucketName }).promise();
 
-        data.Contents.forEach(i => {
+    const contents = listObjects.Contents;
 
-            var fileParams = {
-                Bucket: bucketName,
-                Key: i.Key
-            }
+    contents.forEach(content => {
+        const fileParams = {
+            Bucket: bucketName,
+            Key: content.Key
+        } 
 
-            if (!fs.existsSync(folder)) {
-                fs.mkdirSync(folder, { recursive: true });
-            }
+        if (!fs.existsSync(folder)) {
+            fs.mkdirSync(folder, { recursive: true });
+        }
 
-            let file = fs.createWriteStream(`${folder}/${i.Key}`);
+        let file = fs.createWriteStream(`${folder}/${content.Key}`);
 
-            return new Promise((resolve, reject) => {
-                cos.getObject(fileParams).createReadStream()
-                    .on('end', () => {
-                        return resolve();
-                    })
-                    .on('error', (error) => {
-                        return reject(error);
-                    }).pipe(file);
-            });
-        })
+        return new Promise((resolve, reject) => {
+            cos.getObject(fileParams).createReadStream()
+                .on('end', () => {
+                    return resolve();
+                })
+                .on('error', (error) => {
+                    return reject(error);
+                }).pipe(file);
+        });
     });
 };
 
