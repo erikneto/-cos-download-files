@@ -21,29 +21,29 @@ async function listObjects(bucketName) {
 
     const contents = listObjects.Contents;
 
-    contents.forEach(content => {
+    contents.forEach(async (content) => {
         const fileParams = {
             Bucket: bucketName,
             Key: content.Key
         } 
 
-        if (!fs.existsSync(folder)) {
-            fs.mkdirSync(folder, { recursive: true });
+        try {
+            await createFile(fileParams, content);
+        } catch (err) {
+            throw new Error('Erro ao criar os arquivos na pasta: ', err);
         }
-
-        let file = fs.createWriteStream(`${folder}/${content.Key}`);
-
-        return new Promise((resolve, reject) => {
-            cos.getObject(fileParams).createReadStream()
-                .on('end', () => {
-                    return resolve();
-                })
-                .on('error', (error) => {
-                    return reject(error);
-                }).pipe(file);
-        });
     });
 };
+
+async function createFile(fileParams, content) {
+    if (!fs.existsSync(folder)) {
+        fs.mkdirSync(folder, { recursive: true });
+    }
+
+    const file = fs.createWriteStream(`${folder}/${content.Key}`);
+
+    await cos.getObject(fileParams).createReadStream().pipe(file);
+}
 
 async function main() {
     updateCosConfig();
@@ -51,7 +51,7 @@ async function main() {
     try {
         await listObjects(bucketName);
     } catch (err) {
-        console.log('Erro ao baixar os objetos do bucket', err);
+        console.log('Erro ao baixar os objetos do bucket: ', err);
     }
 }
 
