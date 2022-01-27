@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dotenv": "^14.3.2",
+    "ibm-cos-sdk": "^1.11.0"
+  }
+}
